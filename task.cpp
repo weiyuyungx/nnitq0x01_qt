@@ -4,53 +4,105 @@
 #include<QThread>
 #include<QDir>
 #include<QFileInfo>
+#include <windows.h>
 task::task()
 {
+
 }
 
 //接收信号
-//@path 可能是目录，文件，链接
-void task::receive(QString path)
+//@path 目录list
+void task::receive(QStringList paths)
 {
     int file_num = 0;
     int empty_dir = 0;
     QStringList new_list = QStringList();
 
+    int paths_size = paths.size();
 
-   QFileInfo* myfile = new  QFileInfo(path);
+
+    for(int i =0;i<paths_size;i++)
+    {
+        QString path = paths.at(i);
 
 
-   if (myfile->isFile())
-   {
-       file_num ++;
-   }
-   else if( myfile->isSymLink())
-   {
-       file_num ++;
-   }
-   else
-   {
+        QDir* dir = new  QDir(path);
 
-       QDir dir(path);
-       QStringList files = dir.entryList();
+        dir->setFilter(QDir::Files | QDir::Dirs| QDir::NoDotAndDotDot );
 
-       int size = files.size();
+       QFileInfoList file = dir->entryInfoList();
 
-       if (size < 0)
+       int size = file.size();
+
+
+       if (size == 0)
        {
-           file_num ++;
-       }
-       else if (size == 2)
-       {
-           empty_dir ++;
+          empty_dir ++;
        }
        else
        {
-           new_list = files;
+             for(int j =0;j<size;j++)
+             {
+
+                QFileInfo one = file.at(j);
+
+                if (one.isFile() || one.isSymLink())
+                {
+                   file_num ++;
+                }
+                else
+                {
+                    //new_list.append(one.filePath());
+
+                    //再找一层
+
+
+                            QDir* sondir = new  QDir(one.filePath());
+
+                            sondir->setFilter(QDir::Files | QDir::Dirs| QDir::NoDotAndDotDot );
+
+                           QFileInfoList sonfile = sondir->entryInfoList();
+
+                           int sonsize = sonfile.size();
+
+                           if (sonsize == 0)
+                           {
+                              empty_dir ++;
+                           }
+                           else
+                           {
+                               for(int k =0;k<sonsize;k++)
+                               {
+
+                                  QFileInfo sonone = sonfile.at(k);
+
+                                  if (sonone.isFile() || sonone.isSymLink())
+                                  {
+                                     file_num ++;
+                                  }
+                                  else
+                                  {
+                                       new_list.append(sonone.filePath());
+                                  }
+                               }
+                           }
+
+
+
+
+
+                    //再找一层ned
+                }
+             }
        }
-   }
-   emit finishmission(new_list,empty_dir ,file_num ,path);
+
+    }//end for
+
+
+    //发信号
+    emit finishmission(new_list ,empty_dir ,file_num );
 }
+
 
 
 

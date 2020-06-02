@@ -23,7 +23,7 @@ void begin::gogogo()
     this->file_num = 0;
     this->empty_dir = 0;
     this->running_mission = 0;
-    this->thread_num = 4; //4个线程最合适
+    this->thread_num = 4; //线程数。4个最合适(最多只能写8)
     this->total_i =0;
 
     //初始化线程与任务
@@ -31,74 +31,83 @@ void begin::gogogo()
     {
         task* tk = new task();
 
-        //完成任务时的信号
-        QObject::connect(tk, SIGNAL(finishmission(QStringList,int ,int,QString)), this, SLOT(acceptmission(QStringList,int ,int,QString)));
+        //完成任务时的信号(新的)
+        QObject::connect(tk, SIGNAL(finishmission(QStringList,int ,int)), this, SLOT(acceptmission(QStringList,int ,int)));
 
 
         //发送新任务时的信号
         if (i == 0)
         {
-           QObject::connect(this, SIGNAL(send_00(QString)), tk, SLOT(receive(QString)));
+           QObject::connect(this, SIGNAL(send_00(QStringList)), tk, SLOT(receive(QStringList)));
         }
         else if (i == 1)
         {
-           QObject::connect(this, SIGNAL(send_01(QString)), tk, SLOT(receive(QString)));
+           QObject::connect(this, SIGNAL(send_01(QStringList)), tk, SLOT(receive(QStringList)));
         }
         else if (i == 2)
         {
-           QObject::connect(this, SIGNAL(send_02(QString)), tk, SLOT(receive(QString)));
+           QObject::connect(this, SIGNAL(send_02(QStringList)), tk, SLOT(receive(QStringList)));
         }
         else if (i == 3)
         {
-           QObject::connect(this, SIGNAL(send_03(QString)), tk, SLOT(receive(QString)));
+           QObject::connect(this, SIGNAL(send_03(QStringList)), tk, SLOT(receive(QStringList)));
+        }
+        else if (i == 4)
+        {
+           QObject::connect(this, SIGNAL(send_04(QStringList)), tk, SLOT(receive(QStringList)));
+        }
+        else if (i == 5)
+        {
+           QObject::connect(this, SIGNAL(send_05(QStringList)), tk, SLOT(receive(QStringList)));
+        }
+        else if (i == 6)
+        {
+           QObject::connect(this, SIGNAL(send_06(QStringList)), tk, SLOT(receive(QStringList)));
+        }
+        else if (i == 7)  //最多8个，再多没意义
+        {
+           QObject::connect(this, SIGNAL(send_07(QStringList)), tk, SLOT(receive(QStringList)));
         }
 
+        //把任务移到一条线程上
         QThread* pthread = new QThread();
-
         tk->moveToThread(pthread);
+
+
+       // SetThreadAffinityMask(pthread,2^i);
+
         pthread->start();
 
     }
 
 
     //执行第一个任务
-    this->trysend(base_dir);
+    QStringList basepaths = QStringList();
+    basepaths.append(this->base_dir);
+    this->trysend(basepaths);
 
 }
 
-void begin:: acceptmission(QStringList files , int empty_dir ,int file_num ,QString dir)
+//接收完成一个任务信号
+void begin:: acceptmission(QStringList paths , int empty_dir ,int file_num)
 {
     this->running_mission--;  //回来一个任务
 
     this->empty_dir += empty_dir;
     this->file_num += file_num;
 
-    int size = files.size();
 
-    if (size > 0)
+    if (paths.size() > 0)
     {
-        //有货的目录
-        for(int i = 0 ;i < size;i ++)
-        {
-           QString at_i =  files.at(i);
-
-           if (at_i == "." || at_i == "..")
-           {
-               continue;
-           }
-           this->trysend(QString("%1/%2").arg(dir).arg(at_i));
-        }
+        emit this->trysend(paths);
     }
 
-   // qDebug() << QString("running_mission:%1").arg(this->running_mission);
-   // qDebug() << QString("dir:%1").arg(dir);
-
-
-    //结束条件
-     this->out();
-
+    this->out();
 }
 
+
+
+//判断结束
 void begin:: out()
 {
   //  qDebug() << QString("file_num:%1").arg(this->file_num);
@@ -110,6 +119,7 @@ void begin:: out()
         float useing_time = (end_time - this->begin_time) ;//单位毫秒
 
 
+         qDebug() << QString("----------------------------------------");
         qDebug() << QString("path:%1").arg(this->base_dir);
         qDebug() << QString("file_num:%1").arg(this->file_num);
 
@@ -122,8 +132,8 @@ void begin:: out()
 }
 
 
-//尝试一个发送
-void begin::trysend(QString path)
+//准备一个发送
+void begin::trysend(QStringList paths)
 {
     this->running_mission++;
     this->total_i ++;
@@ -132,19 +142,34 @@ void begin::trysend(QString path)
 
     if (index == 0)
     {
-        emit send_00(path);
+        emit send_00(paths);
     }
     else if (index == 1)
     {
-        emit send_01(path);
+        emit send_01(paths);
     }
     else if (index == 2)
     {
-        emit send_02(path);
+        emit send_02(paths);
     }
     else if (index == 3)
     {
-      emit send_03(path);
+      emit send_03(paths);
     }
-
+    else if (index == 4)
+    {
+      emit send_04(paths);
+    }
+    else if (index == 5)
+    {
+      emit send_05(paths);
+    }
+    else if (index == 6)
+    {
+      emit send_06(paths);
+    }
+    else if (index == 7)
+    {
+      emit send_07(paths);
+    }
 }

@@ -24,16 +24,22 @@ public:
      void  out();
      qint64 begin_time;
      int total_i;
-     void trysend(QString path);
+     void trysend(QStringList path);
 
 signals:
-     void send_00(QString);
-     void send_01(QString);
-     void send_02(QString);
-     void send_03(QString);
+     void send_00(QStringList);
+     void send_01(QStringList);
+     void send_02(QStringList);
+     void send_03(QStringList);
+     void send_04(QStringList);
+     void send_05(QStringList);
+     void send_06(QStringList);
+     void send_07(QStringList);
+
 
 public slots:
-     void acceptmission(QStringList,int ,int,QString);
+     void acceptmission(QStringList,int ,int);
+
 
 
 
