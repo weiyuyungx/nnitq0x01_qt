@@ -99,7 +99,36 @@ void begin:: acceptmission(QStringList paths , int empty_dir ,int file_num)
 
     if (paths.size() > 0)
     {
-        emit this->trysend(paths);
+
+        //将任务分成N等分,每个线程更平均
+        int ever = paths.size()/this->thread_num;//2
+
+
+        for(int i=0;i<this->thread_num;i++)//0,1,2,3
+        {
+            QStringList temp = QStringList();
+
+            int end;
+            int begin = i*ever;
+
+            if (i == this->thread_num-1)  //最后
+            {
+               end = paths.size();
+            }
+            else
+            {
+               end = (i+1)*ever;
+            }
+
+
+            for(int j=begin;j<end;j++)
+            {
+                temp.append(paths.at(j));
+            }
+
+            this->trysend(temp);
+        }
+
     }
 
     this->out();
@@ -136,9 +165,12 @@ void begin:: out()
 void begin::trysend(QStringList paths)
 {
     this->running_mission++;
+
+
     this->total_i ++;
 
     int index = this->total_i % this->thread_num; //轮询
+
 
     if (index == 0)
     {

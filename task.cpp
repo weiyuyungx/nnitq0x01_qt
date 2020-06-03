@@ -18,6 +18,7 @@ void task::receive(QStringList paths)
     int empty_dir = 0;
     QStringList new_list = QStringList();
 
+
     int paths_size = paths.size();
 
 
